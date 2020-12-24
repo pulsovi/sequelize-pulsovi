@@ -69,20 +69,22 @@ class SequelizePulsovi {
       .map(filename => path.basename(filename, path.extname(filename)));
   }
 
-  makeSchemas() {
-    this.schemas.forEach(schema => {
-      // eslint-disable-next-line global-require, import/no-dynamic-require
-      const schemaModule = require(path.join(this.schemasDir, schema));
-      const { attributes, hooks, methods, options, statics } = schemaModule;
-      const defineOptions = { modelName: schema, ...options, hooks, ...this.defineOptions };
-      const Schema = this.sequelize.define(schema.toLowerCase(), attributes, defineOptions);
+  makeSchema(schema) {
+    // eslint-disable-next-line global-require, import/no-dynamic-require
+    const schemaModule = require(path.join(this.schemasDir, schema));
+    const { attributes, hooks, methods, options, statics } = schemaModule;
+    const defineOptions = { modelName: schema, ...options, hooks, ...this.defineOptions };
+    const Schema = this.sequelize.define(schema.toLowerCase(), attributes, defineOptions);
 
-      sequelizeTransforms(Schema);
-      Object.assign(Schema, statics);
-      Object.assign(Schema.prototype, methods);
-      Schema.module = schemaModule;
-      this[schema] = Schema;
-    });
+    sequelizeTransforms(Schema);
+    Object.assign(Schema, statics);
+    Object.assign(Schema.prototype, methods);
+    Schema.module = schemaModule;
+    this[schema] = Schema;
+  }
+
+  makeSchemas() {
+    this.schemas.forEach(schema => this.makeSchema(schema));
   }
 
   associateSchemas() {

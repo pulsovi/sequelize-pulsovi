@@ -12,7 +12,8 @@
     ]
   },
   "devDependencies": {
-    "eslint-config-pulsovi": "https://github.com/pulsovi/eslint-config-pulsovi.git"
+    "eslint-config-pulsovi": "https://github.com/pulsovi/eslint-config-pulsovi.git",
+    "mysql2": "^2.2.5"
   },
   "dependencies": {
     "promise-no-callback": "https://github.com/pulsovi/promise-no-callback.git",
