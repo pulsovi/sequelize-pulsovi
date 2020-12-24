@@ -4,7 +4,7 @@ const path = require('path');
 const promiseNC = require('promise-no-callback');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
-const { has, isArray, isObject, isString } = require('underscore-pulsovi');
+const { has, isArray, isEmpty, isObject, isString } = require('underscore-pulsovi');
 
 class SequelizePulsovi {
   constructor(options) {
@@ -27,13 +27,63 @@ class SequelizePulsovi {
     await this.connect(resolve, reject);
   }
 
+  associate(type, aTable, options) {
+    if (type === 'oneToMany') return this.associateOneToMany(aTable, options);
+    if (type === 'manyToMany') return this.associateManyToMany(aTable, options);
+    throw new TypeError(`Unable to make ${type} association.`);
+  }
+
+  associateManyToMany(aTable, associationOptions) {
+    const options = Object.assign(parseAssociationOptions(associationOptions), {
+      aTable,
+      aToB: 'belongsToMany',
+      bToA: 'belongsToMany',
+    });
+    const { reverseOptions, rightOptions } = options;
+    const rightThrough = rightOptions.through;
+    const reverseThrough = reverseOptions.through;
+
+    if (!isEmpty(reverseOptions)) {
+      if (isString(rightThrough) && has(this, rightThrough))
+        rightOptions.through = this[rightThrough];
+      if (isString(reverseThrough) && has(this, reverseThrough))
+        reverseOptions.through = this[reverseThrough];
+      rightOptions.through = rightThrough || reverseThrough;
+      reverseOptions.through = reverseThrough || rightThrough;
+      if (reverseThrough !== rightThrough)
+        throw new Error('rightOptions.through and reverseOptions.through must be the same');
+    }
+
+    return this.makeAssociation(options);
+  }
+
+  associateOneToMany(aTable, associationOptions) {
+    const options = Object.assign(parseAssociationOptions(associationOptions), {
+      aTable,
+      aToB: 'belongsTo',
+      bToA: 'hasMany',
+    });
+    return this.makeAssociation(options);
+  }
+
+  associateSchema(schema) {
+    const { associations = {}} = this[schema].module;
+
+    Object.keys(associations).forEach(type => {
+      associations[type].forEach(this.associate.bind(this, type, schema));
+    });
+  }
+
+  associateSchemas() {
+    this.schemas.forEach(schema => this.associateSchema(schema));
+  }
+
   connect(resolve, reject) {
     this.sequelize.transaction(transaction => {
       const sync = this.sequelize.sync({ force: false, transaction });
 
       sync.then(() => {
         resolve(this);
-        console.info('Connected to database.');
       }).catch(error => {
         reject(error);
         console.error('Unable to connect to the database:', error);
@@ -70,6 +120,30 @@ class SequelizePulsovi {
       .map(filename => path.basename(filename, path.extname(filename)));
   }
 
+  makeAssociation(options) {
+    // { aTable, bTable, aToB, bToA, rightOptions, reverseOptions }
+    const { aTable, bTable } = options;
+    const aSchema = this[aTable];
+    const bSchema = this[bTable];
+    const { bToA, aToB } = options;
+
+    try {
+      if (!isString(bTable) || !has(this, bTable)) {
+        throw new ReferenceError(`There is no table nammed ${bTable},` +
+        ` allowed names are :\n\t${this.schemas.join('\n\t')}`);
+      }
+
+      if (!isEmpty(options.reverseOptions)) bSchema[bToA](aSchema, { ...options.reverseOptions });
+      aSchema[aToB](bSchema, options.rightOptions);
+    } catch (error) {
+      const at = `\n    at ${path.resolve(this.schemasDir, `${aTable}.js`)}` +
+      `\n        associations with ${bTable}`;
+
+      error.message += at;
+      throw error;
+    }
+  }
+
   makeSchema(schema) {
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const schemaModule = require(path.join(this.schemasDir, schema));
@@ -87,87 +161,25 @@ class SequelizePulsovi {
   makeSchemas() {
     this.schemas.forEach(schema => this.makeSchema(schema));
   }
-
-  associateSchemas() {
-    this.schemas.forEach(schema => {
-      const { associations = {}} = this[schema];
-
-      if (associations.oneToMany)
-        associations.oneToMany.forEach(associate(schema, 'belongsTo', 'hasMany'));
-
-      if (associations.manyToMany) {
-        associations.manyToMany
-          .map(bSchema => {
-          // array to object
-            if (!isArray(bSchema)) return bSchema;
-            const [table, options, reverseOptions] = bSchema;
-            return { options, reverseOptions, table };
-          })
-          .map(bSchema => {
-          // through must be the same
-            if (!isObject(bSchema))
-              throw new TypeError(`bSchema must be either array or object ${typeof bSchema} found`);
-            const { options = {}, reverseOptions = {}, table } = bSchema;
-
-            // reverseOptions can be `false` to disable reverse bonding
-            if (reverseOptions) {
-              if (isString(options.through) && has(exports, options.through))
-                options.through = exports[options.through];
-              if (isString(reverseOptions.through) && has(exports, reverseOptions.through))
-                reverseOptions.through = exports[reverseOptions.through];
-              options.through = options.through || reverseOptions.through;
-              reverseOptions.through = reverseOptions.through || options.through;
-              if (reverseOptions.through !== options.through)
-                throw new Error('options.through and reverseOptions.through must be the same');
-            }
-            return { options, reverseOptions, table };
-          })
-          .forEach(associate(schema, 'belongsToMany', 'belongsToMany'));
-      }
-    });
-  }
 }
 
-function associate(aTable, aToB, bToA) {
-  return function associateTo(bSchema) {
-    let bTable = null;
-    let options = null;
-    let reverseOptions = null;
+function parseAssociationOptions(options) {
+  let bTable = null;
+  let rightOptions = {};
+  let reverseOptions = {};
 
-    try {
-      ({ bTable, options, reverseOptions } = parseOptions(bSchema));
-      if (!isString(bTable) || !has(exports, bTable))
-        throw new ReferenceError(`There is no table nammed ${bTable}`);
-      // reverseOptions can be `false` to disable reverse bonding
-      if (reverseOptions) exports[bTable][bToA](exports[aTable], { ...reverseOptions });
-      exports[aTable][aToB](exports[bTable], options);
-    } catch (error) {
-      const at = `\n    at ${path.resolve('./schemas/', `${aTable}.js`)}` +
-      `\n        associations with ${bTable}`;
-
-      error.message += at;
-      throw error;
-    }
-  };
-
-  function parseOptions(bSchema) {
-    let bTable = null;
-    let options = {};
-    let reverseOptions = {};
-
-    if (isString(bSchema)) bTable = bSchema;
-    else if (isArray(bSchema))
-      [bTable, options, reverseOptions = {}] = bSchema;
-    else if (isObject(bSchema))
-      ({ table: bTable, options, reverseOptions = {}} = bSchema);
-    else {
-      throw new TypeError(
-        `bSchema must be either string, array or object ${typeof bSchema} found`
-      );
-    }
-
-    return { bTable, options, reverseOptions };
+  if (isString(options)) bTable = options;
+  else if (isArray(options))
+    [bTable, rightOptions = {}, reverseOptions = {}] = options;
+  else if (isObject(options))
+    ({ table: bTable, options: rightOptions = {}, reverseOptions = {}} = options);
+  else {
+    throw new TypeError(
+      `options must be either string, array or object ${typeof options} found`
+    );
   }
+
+  return { bTable, reverseOptions, rightOptions };
 }
 
 module.exports = SequelizePulsovi;
