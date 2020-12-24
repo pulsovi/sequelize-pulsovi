@@ -6,10 +6,13 @@
   "repository": "https://github.com/pulsovi/sequelize-pulsovi.git",
   "author": "David GABISON <david.gabison@outlook.com>",
   "license": "MIT",
+  "eslintConfig": {
+    "extends": [
+      "pulsovi/node"
+    ]
+  },
   "devDependencies": {
-    "eslint": "^7.13.0",
-    "eslint-config-airbnb": "^18.2.1",
-    "eslint-plugin-import": "^2.22.1"
+    "eslint-config-pulsovi": "https://github.com/pulsovi/eslint-config-pulsovi.git"
   },
   "dependencies": {
     "promise-no-callback": "https://github.com/pulsovi/promise-no-callback.git",
