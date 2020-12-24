@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
+const promiseNC = require('promise-no-callback');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
 const { has, isArray, isObject, isString } = require('underscore-pulsovi');
-const promiseNC = require('promise-no-callback');
 
 class SequelizePulsovi {
   constructor(options) {
@@ -167,4 +167,4 @@ function associate(aTable, aToB, bToA) {
   }
 }
 
-module.exports = options => new SequelizePulsovi(options);
+module.exports = SequelizePulsovi;
