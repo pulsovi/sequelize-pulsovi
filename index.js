@@ -21,7 +21,7 @@ class SequelizePulsovi {
 
     this.ready = promise;
     this.getSequelize();
-    await this.getSchemasList();
+    this.getSchemasList();
     this.makeSchemas();
     this.associateSchemas();
     await this.connect(resolve, reject);
@@ -59,8 +59,9 @@ class SequelizePulsovi {
     });
   }
 
-  async getSchemasList() {
-    const schemas = await fs.promises.readdir(this.schemasDir, { withFileTypes: true });
+  getSchemasList() {
+    // eslint-disable-next-line no-sync
+    const schemas = fs.readdirSync(this.schemasDir, { withFileTypes: true });
 
     this.schemas = schemas
       .filter(dirent => dirent.isFile())
