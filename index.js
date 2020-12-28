@@ -28,9 +28,17 @@ class SequelizePulsovi {
   }
 
   associate(type, aTable, options) {
-    if (type === 'oneToMany') return this.associateOneToMany(aTable, options);
-    if (type === 'manyToMany') return this.associateManyToMany(aTable, options);
-    throw new TypeError(`Unable to make ${type} association.`);
+    try {
+      if (type === 'oneToMany') return this.associateOneToMany(aTable, options);
+      if (type === 'manyToMany') return this.associateManyToMany(aTable, options);
+      throw new TypeError(`Unable to make ${type} association.`);
+    } catch (error) {
+      const at = `\n    at ${path.resolve(this.schemasDir, `${aTable}.js`)}` +
+      `\n        associations with ${JSON.stringify(options)}`;
+
+      error.message += at;
+      throw error;
+    }
   }
 
   associateManyToMany(aTable, associationOptions) {
@@ -125,21 +133,13 @@ class SequelizePulsovi {
     const bSchema = this[bTable];
     const { bToA, aToB } = options;
 
-    try {
-      if (!isString(bTable) || !has(this, bTable)) {
-        throw new ReferenceError(`There is no table nammed ${bTable},` +
-        ` allowed names are :\n\t${this.schemas.join('\n\t')}`);
-      }
-
-      if (!isEmpty(options.reverseOptions)) bSchema[bToA](aSchema, { ...options.reverseOptions });
-      aSchema[aToB](bSchema, options.rightOptions);
-    } catch (error) {
-      const at = `\n    at ${path.resolve(this.schemasDir, `${aTable}.js`)}` +
-      `\n        associations with ${bTable}`;
-
-      error.message += at;
-      throw error;
+    if (!isString(bTable) || !has(this, bTable)) {
+      throw new ReferenceError(`There is no table nammed ${bTable},` +
+      ` allowed names are :\n\t${this.schemas.join('\n\t')}`);
     }
+
+    if (!isEmpty(options.reverseOptions)) bSchema[bToA](aSchema, { ...options.reverseOptions });
+    aSchema[aToB](bSchema, options.rightOptions);
   }
 
   makeSchema(schema) {
