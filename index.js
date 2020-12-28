@@ -4,7 +4,7 @@ const path = require('path');
 const promiseNC = require('promise-no-callback');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
-const { has, isArray, isEmpty, isObject, isString } = require('underscore-pulsovi');
+const { has, isArray, isEmpty, isObject, isString } = require('underscore');
 
 class SequelizePulsovi {
   constructor(options) {

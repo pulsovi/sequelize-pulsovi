@@ -19,7 +19,7 @@
   "dependencies": {
     "promise-no-callback": "https://github.com/pulsovi/promise-no-callback.git",
     "sequelize-transforms": "^2.0.0",
-    "underscore-pulsovi": "https://github.com/pulsovi/underscore-pulsovi.git"
+    "underscore": "^1.12.0"
   },
   "peerDependencies": {
     "sequelize": "^6.3.5"
