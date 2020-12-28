@@ -40,17 +40,15 @@ class SequelizePulsovi {
       bToA: 'belongsToMany',
     });
     const { reverseOptions, rightOptions } = options;
-    const rightThrough = rightOptions.through;
-    const reverseThrough = reverseOptions.through;
 
-    if (!isEmpty(reverseOptions)) {
-      if (isString(rightThrough) && has(this, rightThrough))
-        rightOptions.through = this[rightThrough];
-      if (isString(reverseThrough) && has(this, reverseThrough))
-        reverseOptions.through = this[reverseThrough];
-      rightOptions.through = rightThrough || reverseThrough;
-      reverseOptions.through = reverseThrough || rightThrough;
-      if (reverseThrough !== rightThrough)
+    if (isObject(reverseOptions)) {
+      if (isString(rightOptions.through) && has(this, rightOptions.through))
+        rightOptions.through = this[rightOptions.through];
+      if (isString(reverseOptions.through) && has(this, reverseOptions.through))
+        reverseOptions.through = this[reverseOptions.through];
+      rightOptions.through = rightOptions.through || reverseOptions.through;
+      reverseOptions.through = reverseOptions.through || rightOptions.through;
+      if (reverseOptions.through !== rightOptions.through)
         throw new Error('rightOptions.through and reverseOptions.through must be the same');
     }
 
