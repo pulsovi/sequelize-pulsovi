@@ -1,6 +1,6 @@
 {
   "name": "sequelize-pulsovi",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "sequelize wrapper to define each entity in its own file",
   "main": "index.js",
   "repository": "https://github.com/pulsovi/sequelize-pulsovi.git",
