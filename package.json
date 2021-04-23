@@ -1,6 +1,6 @@
 {
   "name": "sequelize-schemas",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "sequelize wrapper to define each entity in its own file",
   "main": "index.js",
   "repository": "https://github.com/pulsovi/sequelize-pulsovi.git",
