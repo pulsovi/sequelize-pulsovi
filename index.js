@@ -12,6 +12,7 @@ class SequelizePulsovi {
       logging: false,
       retryTimeout: 2000,
       schemasDir: path.join(process.cwd(), 'schemas'),
+      syncOptions: { force: false, ...options.sync },
     }, options);
     this.init();
   }
@@ -86,7 +87,7 @@ class SequelizePulsovi {
 
   connect(resolve, reject) {
     this.sequelize.transaction(transaction => {
-      const sync = this.sequelize.sync({ force: false, transaction });
+      const sync = this.sequelize.sync({ ...this.syncOptions, transaction });
 
       sync.then(() => {
         resolve(this);
