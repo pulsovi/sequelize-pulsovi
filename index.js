@@ -32,6 +32,7 @@ class SequelizeSchemas {
 
   associate(type, aTable, options) {
     try {
+      if (type === 'oneToOne') return this.associateOneToOne(aTable, options);
       if (type === 'oneToMany') return this.associateOneToMany(aTable, options);
       if (type === 'manyToMany') return this.associateManyToMany(aTable, options);
       throw new TypeError(`${type} association are not available at now, sorry.`);
@@ -71,6 +72,15 @@ class SequelizeSchemas {
       aTable,
       aToB: 'belongsTo',
       bToA: 'hasMany',
+    });
+    return this.makeAssociation(options);
+  }
+
+  associateOneToOne(aTable, associationOptions) {
+    const options = Object.assign(parseAssociationOptions(associationOptions), {
+      aTable,
+      aToB: 'belongsTo',
+      bToA: 'hasOne',
     });
     return this.makeAssociation(options);
   }
