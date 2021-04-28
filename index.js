@@ -34,7 +34,7 @@ class SequelizeSchemas {
     try {
       if (type === 'oneToMany') return this.associateOneToMany(aTable, options);
       if (type === 'manyToMany') return this.associateManyToMany(aTable, options);
-      throw new TypeError(`Unable to make ${type} association.`);
+      throw new TypeError(`${type} association are not available at now, sorry.`);
     } catch (error) {
       const at = `\n    at ${path.resolve(this.schemasDir, `${aTable}.js`)}` +
       `\n        associations with ${JSON.stringify(options)}`;
