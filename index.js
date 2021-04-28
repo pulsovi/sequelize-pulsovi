@@ -6,7 +6,7 @@ const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
 const { has, isArray, isEmpty, isObject, isString } = require('underscore');
 
-class SequelizePulsovi {
+class SequelizeSchemas {
   constructor(options) {
     const defaultOptions = {
       logging: false,
@@ -188,4 +188,4 @@ function parseSequelizeOptions(options) {
   return { logging, retryTimeout, schemasDir, syncOptions: { force: sync.force }};
 }
 
-module.exports = SequelizePulsovi;
+module.exports = SequelizeSchemas;
