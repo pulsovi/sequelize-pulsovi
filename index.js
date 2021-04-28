@@ -8,12 +8,14 @@ const { has, isArray, isEmpty, isObject, isString } = require('underscore');
 
 class SequelizePulsovi {
   constructor(options) {
-    Object.assign(this, {
+    const defaultOptions = {
       logging: false,
       retryTimeout: 2000,
       schemasDir: path.join(process.cwd(), 'schemas'),
-      syncOptions: { force: false, ...options.sync },
-    }, options);
+      syncOptions: { force: false },
+    };
+
+    Object.assign(this, defaultOptions, parseSequelizeOptions(options));
     this.init();
   }
 
@@ -179,6 +181,11 @@ function parseAssociationOptions(options) {
   }
 
   return { bTable, reverseOptions, rightOptions };
+}
+
+function parseSequelizeOptions(options) {
+  const { logging, retryTimeout, schemasDir, sync } = options;
+  return { logging, retryTimeout, schemasDir, syncOptions: { force: sync.force }};
 }
 
 module.exports = SequelizePulsovi;
