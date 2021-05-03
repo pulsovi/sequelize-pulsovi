@@ -4,18 +4,26 @@ const path = require('path');
 const promiseNC = require('promise-no-callback');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
-const { has, isArray, isEmpty, isObject, isString } = require('underscore');
+const { has, isArray, isEmpty, isNumber, isObject, isString } = require('underscore');
 
 class SequelizeSchemas {
   constructor(options) {
-    const defaultOptions = {
-      logging: false,
+    // default options
+    this.options = {
       retryTimeout: 2000,
       schemasDir: path.join(process.cwd(), 'schemas'),
-      syncOptions: { force: false },
+      sequelize: {
+        define: {
+          charset: 'utf8',
+          collate: 'utf8_general_ci',
+          underscored: true,
+        },
+        logging: false,
+        sync: { force: false },
+      },
     };
 
-    Object.assign(this, defaultOptions, parseSequelizeOptions(options));
+    this.mergeOptions(options);
     this.init();
   }
 
@@ -37,7 +45,7 @@ class SequelizeSchemas {
       if (type === 'manyToMany') return this.associateManyToMany(aTable, options);
       throw new TypeError(`${type} association are not available at now, sorry.`);
     } catch (error) {
-      const at = `\n    at ${path.resolve(this.schemasDir, `${aTable}.js`)}` +
+      const at = `\n    at ${path.resolve(this.options.schemasDir, `${aTable}.js`)}` +
       `\n        associations with ${JSON.stringify(options)}`;
 
       error.message += at;
@@ -99,7 +107,7 @@ class SequelizeSchemas {
 
   connect(resolve, reject) {
     this.sequelize.transaction(transaction => {
-      const sync = this.sequelize.sync({ ...this.syncOptions, transaction });
+      const sync = this.sequelize.sync({ transaction });
 
       sync.then(() => {
         resolve(this);
@@ -110,27 +118,18 @@ class SequelizeSchemas {
 
       return sync;
     }).catch(err => {
-      setTimeout(() => this.connect(resolve, reject), this.retryTimeout);
+      setTimeout(() => this.connect(resolve, reject), this.options.retryTimeout);
       throw err;
     });
   }
 
   getSequelize() {
-    this.sequelize = new Sequelize(this.database, this.username, this.password, {
-      define: {
-        charset: 'utf8',
-        collate: 'utf8_general_ci',
-        underscored: true,
-      },
-      dialect: this.dialect,
-      host: this.host,
-      logging: this.logging,
-    });
+    this.sequelize = new Sequelize(this.options.sequelize);
   }
 
   getSchemasList() {
     // eslint-disable-next-line no-sync
-    const schemas = fs.readdirSync(this.schemasDir, { withFileTypes: true });
+    const schemas = fs.readdirSync(this.options.schemasDir, { withFileTypes: true });
 
     this.schemas = schemas
       .filter(dirent => dirent.isFile())
@@ -157,9 +156,9 @@ class SequelizeSchemas {
 
   makeSchema(schema) {
     // eslint-disable-next-line global-require, import/no-dynamic-require
-    const schemaModule = require(path.join(this.schemasDir, schema));
+    const schemaModule = require(path.join(this.options.schemasDir, schema));
     const { attributes, hooks, methods, options, statics } = schemaModule;
-    const defineOptions = { modelName: schema, ...options, hooks, ...this.defineOptions };
+    const defineOptions = { modelName: schema, ...options, hooks };
     const Schema = this.sequelize.define(schema.toLowerCase(), attributes, defineOptions);
 
     sequelizeTransforms(Schema);
@@ -171,6 +170,25 @@ class SequelizeSchemas {
 
   makeSchemas() {
     this.schemas.forEach(schema => this.makeSchema(schema));
+  }
+
+  mergeOptions(options, root) {
+    if (!root) {
+      const { retryTimeout, schemasDir, ...restOptions } = options;
+
+      if (isNumber(retryTimeout)) this.options.retryTimeout = retryTimeout;
+      if (isString(schemasDir)) this.options.schemasDir = schemasDir;
+      this.mergeOptions(restOptions, this.options.sequelize);
+      return;
+    }
+
+    Reflect.ownKeys(options).forEach(key => {
+      if (isObject(options[key]) && isObject(root[key])) {
+        this.mergeOptions(options[key], root[key]);
+        return;
+      }
+      root[key] = options[key];
+    });
   }
 }
 
@@ -191,11 +209,6 @@ function parseAssociationOptions(options) {
   }
 
   return { bTable, reverseOptions, rightOptions };
-}
-
-function parseSequelizeOptions(options) {
-  const { logging, retryTimeout, schemasDir, sync } = options;
-  return { logging, retryTimeout, schemasDir, syncOptions: { force: sync.force }};
 }
 
 module.exports = SequelizeSchemas;
