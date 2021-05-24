@@ -20,7 +20,8 @@
     "sequelize": "^6.3.5"
   },
   "dependencies": {
-    "promise-no-callback": "https://github.com/pulsovi/promise-no-callback.git",
+    "bluebird": "^3.7.2",
+    "debug": "^4.3.1",
     "sequelize-transforms": "^2.0.0",
     "underscore": "^1.12.0"
   },
