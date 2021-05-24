@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const promiseNC = require('bluebird').pending;
 const debug = require('debug')('sequelize-pulsovi');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
@@ -211,6 +210,16 @@ function parseAssociationOptions(options) {
   }
 
   return { bTable, reverseOptions, rightOptions };
+}
+
+function promiseNC() {
+  const deferred = {};
+
+  deferred.promise = new Promise((rs, rj) => {
+    deferred.resolve = rs;
+    deferred.reject = rj;
+  });
+  return deferred;
 }
 
 module.exports = SequelizeSchemas;
