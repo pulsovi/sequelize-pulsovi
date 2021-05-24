@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const debug = require('debug')('sequelize-pulsovi');
 const promiseNC = require('promise-no-callback');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
@@ -124,6 +125,7 @@ class SequelizeSchemas {
   }
 
   getSequelize() {
+    debug('Sequelize initialisation', JSON.stringify(this.options, null, 2));
     this.sequelize = new Sequelize(this.options.sequelize);
   }
 
