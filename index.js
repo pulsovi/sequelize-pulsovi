@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const debug = require('debug')('sequelize-pulsovi');
+const debug = require('debug')('sequelize-schemas');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
 const { has, isArray, isEmpty, isNumber, isObject, isString } = require('underscore');
