@@ -1,6 +1,6 @@
 {
   "name": "sequelize-schemas",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "sequelize wrapper to define each entity in its own file",
   "main": "index.js",
   "repository": "https://github.com/pulsovi/sequelize-pulsovi.git",
@@ -11,7 +11,10 @@
       "pulsovi/node"
     ]
   },
-  "files": ["index.js", "Model.js"],
+  "files": [
+    "index.js",
+    "Model.js"
+  ],
   "devDependencies": {
     "eslint": "^7.24.0",
     "eslint-config-airbnb": "^18.2.1",
