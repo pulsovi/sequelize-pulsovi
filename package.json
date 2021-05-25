@@ -11,6 +11,7 @@
       "pulsovi/node"
     ]
   },
+  "files": ["index.js", "Model.js"],
   "devDependencies": {
     "eslint": "^7.24.0",
     "eslint-config-airbnb": "^18.2.1",
