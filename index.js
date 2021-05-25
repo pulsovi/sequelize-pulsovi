@@ -171,12 +171,11 @@ class SequelizeSchemas {
     };
     const Schema = class extends Model {};
 
+    Object.assign(Schema, statics, { module: schemaModule });
+    Schema.module.path = modulePath;
+    Object.assign(Schema.prototype, methods, { models: this.sequelize.models });
     Schema.init(attributes, initOptions);
     sequelizeTransforms(Schema);
-    Object.assign(Schema, statics);
-    Object.assign(Schema.prototype, methods);
-    Schema.module = schemaModule;
-    Schema.module.path = modulePath;
     this[schema] = Schema;
   }
 
