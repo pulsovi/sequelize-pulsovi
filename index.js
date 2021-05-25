@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 const fs = require('fs');
 const path = require('path');
 
@@ -5,6 +6,8 @@ const debug = require('debug')('sequelize-schemas');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
 const { has, isArray, isEmpty, isNumber, isObject, isString } = require('underscore');
+
+const Model = require('./Model');
 
 class SequelizeSchemas {
   constructor(options) {
@@ -159,9 +162,15 @@ class SequelizeSchemas {
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const schemaModule = require(path.join(this.options.schemasDir, schema));
     const { attributes, hooks, methods, options, statics } = schemaModule;
-    const defineOptions = { modelName: schema, ...options, hooks };
-    const Schema = this.sequelize.define(schema.toLowerCase(), attributes, defineOptions);
+    const initOptions = {
+      hooks,
+      modelName: schema.toLowerCase(),
+      ...options,
+      sequelize: this.sequelize,
+    };
+    const Schema = class extends Model {};
 
+    Schema.init(attributes, initOptions);
     sequelizeTransforms(Schema);
     Object.assign(Schema, statics);
     Object.assign(Schema.prototype, methods);
