@@ -159,8 +159,9 @@ class SequelizeSchemas {
   }
 
   makeSchema(schema) {
+    const modulePath = path.join(this.options.schemasDir, schema);
     // eslint-disable-next-line global-require, import/no-dynamic-require
-    const schemaModule = require(path.join(this.options.schemasDir, schema));
+    const schemaModule = require(modulePath);
     const { attributes, hooks, methods, options, statics } = schemaModule;
     const initOptions = {
       hooks,
@@ -175,6 +176,7 @@ class SequelizeSchemas {
     Object.assign(Schema, statics);
     Object.assign(Schema.prototype, methods);
     Schema.module = schemaModule;
+    Schema.module.path = modulePath;
     this[schema] = Schema;
   }
 
