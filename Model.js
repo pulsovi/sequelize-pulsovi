@@ -77,18 +77,32 @@ class Model extends Sequelize.Model {
       return await instance.fill(this).deepSave({ association, parent });
     }
 
-    await this.save();
-    await Promise.all(this.associationsData ?? []).map(async([assoc, value]) => {
-      await Promise.all((isArray(value) ? value : [value])
-        .map(item => item.deepSave({ association: assoc, parent: this }), this));
-      return this[assoc.accessors.set](value);
-    }, this);
+    await this.save().catch(error => {
+      stackPush(error, `at save ${this.deepPath}`);
+      throw error;
+    });
+    await this.saveAssociations().catch(error => {
+      stackPush(error, `save associations for ${this.deepPath}`);
+      throw error;
+    });
     return this;
+  }
+
+  async saveAssociations() {
+    return await Promise.all(this.associationsData.map(this.saveAssociation, this));
+  }
+
+  async saveAssociation([assoc, value]) {
+    await Promise.all([].concat(value)
+      .map(item => item.deepSave({ association: assoc, parent: this }), this));
+    return await this[assoc.accessors.set](value).catch(error => {
+      stackPush(error, `set value for ${this.deepPath}.${assoc.associationAccessor}`);
+      throw error;
+    });
   }
 
   async fillAndSave(values) {
     await this.fill(values);
-
     return this.deepSave();
   }
 
@@ -100,6 +114,15 @@ class Model extends Sequelize.Model {
       .some(primaryKeyAttribute => isNull(this[primaryKeyAttribute]) ||
         isUndefined(this[primaryKeyAttribute]));
   }
+}
+
+function stackPush(error, message) {
+  const pos = new Error().stack.split('\n    at').length;
+  const newStack = error.stack.split('\n    at');
+
+  newStack.splice(-(pos - 4), 0, ` ${message}`);
+  error.stack = newStack.join('\n    at');
+  return error;
 }
 
 module.exports = Model;
