@@ -5,12 +5,20 @@
 const Sequelize = require('sequelize');
 const { isArray, isNull, isUndefined } = require('underscore');
 
-function getFilledModelInstance({ data, model: Schema }) {
+function getFilledModelInstance({ data, deepPath, model: Schema }) {
   const instance = data instanceof Schema ? data : new Schema();
+
+  if (deepPath) instance.deepPath = deepPath;
   return instance.fill(data);
 }
 
 class Model extends Sequelize.Model {
+  constructor(...args) {
+    super(...args);
+    this.deepPath = this.constructor.name;
+    this.associationsData = [];
+  }
+
   async fill(values) {
     const { associations, attributes } = this.constructor;
 
@@ -26,8 +34,16 @@ class Model extends Sequelize.Model {
       const model = association.target;
 
       this.associationsData.push([association, await (isArray(value) ?
-        Promise.all(value.map(data => getFilledModelInstance({ data, model }))) :
-        getFilledModelInstance({ data: value, model })
+        Promise.all(value.map((data, index) => getFilledModelInstance({
+          data,
+          deepPath: `${this.deepPath}.${association.associationAccessor}[${index}]`,
+          model,
+        }))) :
+        getFilledModelInstance({
+          data: value,
+          deepPath: `${this.deepPath}.${association.associationAccessor}`,
+          model,
+        })
       )]);
     }));
 
