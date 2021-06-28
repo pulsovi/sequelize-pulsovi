@@ -2,8 +2,9 @@
  * Based on the work of https://github.com/filipesarturi
  *     at https://github.com/sequelize/sequelize/issues/11836
  */
+const log = require('debug')('sequelize-schemas:Model');
 const Sequelize = require('sequelize');
-const { isArray, isNull, isUndefined } = require('underscore');
+const { isArray, isNull, isObject, isUndefined } = require('underscore');
 
 function getFilledModelInstance({ data, deepPath, model: Schema }) {
   const instance = data instanceof Schema ? data : new Schema();
@@ -20,15 +21,30 @@ class Model extends Sequelize.Model {
   }
 
   async fill(values) {
-    const { associations, attributes } = this.constructor;
+    const { associations, tableAttributes: attributes } = this.constructor;
 
-    this.associationsData = this.associationsData ?? [];
     await Promise.all(Object.entries(values).map(async([key, value]) => {
       const association = associations[key];
 
       if (isUndefined(association)) {
-        if (isUndefined(attributes[key])) this[key] = value;
-        else this.setDataValue(key, value);
+        if (isUndefined(attributes[key])) {
+          log(`WARNING ${key} key: it's not an attribute (maybe a throughModel values ?)`);
+          this[key] = value;
+          return;
+        }
+        if (isObject(value)) {
+          log(`WARNING ${key} key: it's not a primitive value`);
+          // this[key] = value;
+          return;
+        }
+        if (
+          (this.constructor.primaryKeyAttributes || []).includes(key) &&
+         !(isNull(this[key]) || isUndefined(this[key]))
+        ) {
+          log(`SKIP ${key} key: it's a primary key and it's already set`);
+          return;
+        }
+        this.setDataValue(key, value);
         return;
       }
       const model = association.target;
@@ -53,12 +69,12 @@ class Model extends Sequelize.Model {
 
   async deepSave({ association, parent } = {}) {
     if (this.isNewRecord && parent) {
-      const createValue = this?.toObject?.() ?? this;
-      const createOptions = association.throughModel ??
-        { through: this[association.throughModel.name] };
-      const instance = await parent[association.accessors.create](createValue, createOptions);
+      const createOptions = association.throughModel ?
+        { through: this[association.throughModel.name] } :
+        {}.undefined;
+      const instance = await parent[association.accessors.create](this, createOptions);
 
-      return instance.fill(this).deepSave({ association, parent });
+      return await instance.fill(this).deepSave({ association, parent });
     }
 
     await this.save();
