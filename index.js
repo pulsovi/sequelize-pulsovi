@@ -5,7 +5,7 @@ const path = require('path');
 const debug = require('debug')('sequelize-schemas');
 const Sequelize = require('sequelize');
 const sequelizeTransforms = require('sequelize-transforms');
-const { has, isArray, isEmpty, isNumber, isObject, isString } = require('underscore');
+const { has, isArray, isNumber, isObject, isString } = require('underscore');
 
 const Model = require('./Model');
 
@@ -154,11 +154,16 @@ class SequelizeSchemas {
       ` allowed names are :\n\t${this.schemas.join('\n\t')}`);
     }
 
-    if (!isEmpty(options.reverseOptions)) bSchema[bToA](aSchema, { ...options.reverseOptions });
+    if (typeof options.reverseOptions === 'object' && options.reverseOptions !== null) {
+      debug(`${bSchema.name} ${bToA} ${aSchema.name}`);
+      bSchema[bToA](aSchema, { ...options.reverseOptions });
+    }
+    debug(`${aSchema.name} ${aToB} ${bSchema.name}`);
     aSchema[aToB](bSchema, options.rightOptions);
   }
 
   makeSchema(schema) {
+    this.sequelize.log('init schema', schema);
     const modulePath = path.join(this.options.schemasDir, schema);
     // eslint-disable-next-line global-require, import/no-dynamic-require
     const schemaModule = require(modulePath);
