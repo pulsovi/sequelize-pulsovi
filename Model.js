@@ -77,11 +77,12 @@ class Model extends Sequelize.Model {
   }
 
   getIsNewRecord() {
-    const primaryKeyAttributes = this.constructor.primaryKeyAttributes ?? [];
+    const primaryKeyAttributes = this.constructor.primaryKeyAttributes || [];
 
     if (!primaryKeyAttributes.length) return {}.undefined;
     return primaryKeyAttributes
-      .some(primaryKeyAttribute => isNull(this[primaryKeyAttribute] ?? null));
+      .some(primaryKeyAttribute => isNull(this[primaryKeyAttribute]) ||
+        isUndefined(this[primaryKeyAttribute]));
   }
 }
 
