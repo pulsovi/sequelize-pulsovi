@@ -3,7 +3,7 @@
   "version": "0.6.0",
   "description": "sequelize wrapper to define each entity in its own file",
   "main": "index.js",
-  "repository": "https://github.com/pulsovi/sequelize-pulsovi.git",
+  "repository": "git+ssh://git@github.com/pulsovi/sequelize-pulsovi.git",
   "author": "David GABISON <david.gabison@outlook.com>",
   "license": "MIT",
   "eslintConfig": {
