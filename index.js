@@ -10,6 +10,7 @@ const { has, isArray, isNumber, isObject, isString } = require('underscore');
 const Model = require('./Model');
 
 class SequelizeSchemas {
+  // TODO: SequelizeSchemas devrait hériter de sequelize ...
   constructor(options) {
     // default options
     this.options = {

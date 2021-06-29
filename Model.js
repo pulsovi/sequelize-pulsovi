@@ -21,6 +21,7 @@ class Model extends Sequelize.Model {
   }
 
   async fill(values) {
+    // TODO: il faut vérifier rapidement si les attributs sont modifiés, et si ce n'est pas le cas, sauter directement aux associations
     const { associations, tableAttributes: attributes } = this.constructor;
 
     await Promise.all(Object.entries(values).map(async([key, value]) => {
@@ -74,7 +75,8 @@ class Model extends Sequelize.Model {
         {}.undefined;
       const instance = await parent[association.accessors.create](this, createOptions);
 
-      return await instance.fill(this).deepSave({ association, parent });
+      await instance.fill(this);
+      return await instance.deepSave({ association, parent });
     }
 
     await this.save().catch(error => {
