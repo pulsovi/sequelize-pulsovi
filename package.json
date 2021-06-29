@@ -8,7 +8,7 @@
   "license": "MIT",
   "eslintConfig": {
     "extends": [
-      "pulsovi/node"
+      "pulsovi-node"
     ]
   },
   "files": [
@@ -16,19 +16,19 @@
     "Model.js"
   ],
   "devDependencies": {
-    "eslint": "^7.24.0",
-    "eslint-config-airbnb": "^18.2.1",
-    "eslint-config-pulsovi": "^2.4.2",
-    "eslint-plugin-import": "^2.22.1",
+    "eslint-config-pulsovi-node": "^0.0.3",
     "mysql2": "^2.2.5",
-    "sequelize": "^6.3.5"
+    "sequelize": "^6.6.2"
   },
   "dependencies": {
-    "debug": "^4.3.1",
+    "debug": "^4.3.2",
     "sequelize-transforms": "^2.0.0",
-    "underscore": "^1.12.0"
+    "underscore": "^1.13.1"
   },
   "peerDependencies": {
     "sequelize": "^6.3.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
